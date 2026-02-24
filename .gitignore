@@ -17,3 +17,15 @@ env/
 # Streamlit/PyMC/Prophet caches
 .streamlit/
 cmdstanpy/
+
+# Models
+models/*.nc
+
+# Data
+data/raw/*.csv
+data/processed/*.csv
+
+# Python
+venv/
+__pycache__/
+.DS_Store

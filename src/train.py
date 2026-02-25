@@ -6,6 +6,7 @@ from mmm_model import build_mmm
 #from pymc_marketing.mmm.multidimensional import MMM
 from pymc_marketing.mmm import MMM, GeometricAdstock, LogisticSaturation
 import matplotlib.pyplot as plt
+import joblib
 import os
 
 #TODO: comment out
@@ -33,79 +34,82 @@ def run_training():
     az.to_netcdf(trace, "models/mmm_trace.nc")
     print("Success! Model saved to models/mmm_trace.nc")
     
+
+#TODO: delete
+# def run_mmm_training(df):
+
+#     #preprocessing and scaling
+#     #scaler = MaxAbsScaler()
+#     channels = ['TV_Spend', 'YouTube_Spend', 'Facebook_Spend', 'Instagram_Spend']
+#     # df_scaled = df.copy()
+#     # df_scaled[channels] = scaler.fit_transform(df[channels])
+#     # df_scaled['Sales_Value'] = scaler.fit_transform(df[['Sales_Value']])
+
+
+#     # 1. Initialize the model with high-level parameters
+#     mmm = MMM(
+#         date_column="Week",
+#         channel_columns=channels,
+#         adstock=GeometricAdstock(l_max=8), 
+#         saturation=LogisticSaturation(),  
+#         yearly_seasonality=1, 
+
+#         scaling={
+#         "channel": {"method": "max", "dims": []},
+#         "target": {"method": "max", "dims": []},
+#         },
+
+#          model_config = {
+#         # 1. Tighten the baseline. Tell the model sales start near the average of your data.
+#         "intercept": {"dist": "Normal", "kwargs": {"mu": 0, "sigma": 0.1}},
+        
+#         # 2. Tighten the 'Noise'. This forces the blue line to hug the black dots 
+#         # instead of floating in a giant cloud of uncertainty.
+#         "likelihood": {"dist": "Normal", "kwargs": {"sigma": {"dist": "HalfNormal", "kwargs": {"sigma": 0.05}}}},
+        
+#         # 3. Reduce seasonality's power so it doesn't create those giant ghost waves.
+#         "yearly_seasonality": {"dist": "Normal", "kwargs": {"mu": 0, "sigma": 0.05}},
+# }            
+#     )
+
+#     # 2. Fit the model
+#     # X = df_scaled[['Week'] + channels]
+#     # y_scaled = df_scaled['Sales_Value']
+
+#     X = df[['Week'] + channels]
+#     y = df['Sales_Value'].rename("y")
+
+#     mmm.fit(X, y, target_accept=0.9, draws=1000, tune=1000)
+
+#     # 3. View the "built-in" results immediately
+#     # mmm.plot_components_contributions()
+#     # mmm.plot_channel_contribution_share_hdi()
+
+
+#     mmm.save("models/mmm_model_v1.nc")
+#     print("Model saved successfully1!")
+
+#     # loaded_mmm = MMM.load("models/mmm_model_v1.nc")
+
+#     # # print(loaded_mmm.idata.posterior.to_dataframe().head())
+
+#     # loaded_mmm.plot_components_contributions()
+
+#     # #plt.show()
+#     # plt.savefig("plots/components_contribution.png")
+
+#     return mmm
+
+
 def run_mmm_training(df):
 
     #preprocessing and scaling
-    #scaler = MaxAbsScaler()
-    channels = ['TV_Spend', 'YouTube_Spend', 'Facebook_Spend', 'Instagram_Spend']
-    # df_scaled = df.copy()
-    # df_scaled[channels] = scaler.fit_transform(df[channels])
-    # df_scaled['Sales_Value'] = scaler.fit_transform(df[['Sales_Value']])
-
-
-    # 1. Initialize the model with high-level parameters
-    mmm = MMM(
-        date_column="Week",
-        channel_columns=channels,
-        adstock=GeometricAdstock(l_max=8), 
-        saturation=LogisticSaturation(),  
-        yearly_seasonality=1, 
-
-        scaling={
-        "channel": {"method": "max", "dims": []},
-        "target": {"method": "max", "dims": []},
-        },
-
-         model_config = {
-        # 1. Tighten the baseline. Tell the model sales start near the average of your data.
-        "intercept": {"dist": "Normal", "kwargs": {"mu": 0, "sigma": 0.1}},
-        
-        # 2. Tighten the 'Noise'. This forces the blue line to hug the black dots 
-        # instead of floating in a giant cloud of uncertainty.
-        "likelihood": {"dist": "Normal", "kwargs": {"sigma": {"dist": "HalfNormal", "kwargs": {"sigma": 0.05}}}},
-        
-        # 3. Reduce seasonality's power so it doesn't create those giant ghost waves.
-        "yearly_seasonality": {"dist": "Normal", "kwargs": {"mu": 0, "sigma": 0.05}},
-}            
-    )
-
-    # 2. Fit the model
-    # X = df_scaled[['Week'] + channels]
-    # y_scaled = df_scaled['Sales_Value']
-
-    X = df[['Week'] + channels]
-    y = df['Sales_Value'].rename("y")
-
-    mmm.fit(X, y, target_accept=0.9, draws=1000, tune=1000)
-
-    # 3. View the "built-in" results immediately
-    # mmm.plot_components_contributions()
-    # mmm.plot_channel_contribution_share_hdi()
-
-
-    mmm.save("models/mmm_model_v1.nc")
-    print("Model saved successfully!")
-
-    # loaded_mmm = MMM.load("models/mmm_model_v1.nc")
-
-    # # print(loaded_mmm.idata.posterior.to_dataframe().head())
-
-    # loaded_mmm.plot_components_contributions()
-
-    # #plt.show()
-    # plt.savefig("plots/components_contribution.png")
-
-    return mmm
-
-
-def run_mmm_training(df):
-
-    #preprocessing and scaling
-    scaler = MaxAbsScaler()
+    spend_scaler = MaxAbsScaler()
+    sales_scaler = MaxAbsScaler()
     channels = ['TV_Spend', 'YouTube_Spend', 'Facebook_Spend', 'Instagram_Spend']
     df_scaled = df.copy()
-    df_scaled[channels] = scaler.fit_transform(df[channels])
-    df_scaled['Sales_Value'] = scaler.fit_transform(df[['Sales_Value']])
+    df_scaled[channels] = spend_scaler.fit_transform(df[channels])
+    df_scaled['Sales_Value'] = sales_scaler.fit_transform(df[['Sales_Value']])
 
 
     # 1. Initialize the model with high-level parameters
@@ -117,14 +121,10 @@ def run_mmm_training(df):
         yearly_seasonality=1, 
 
          model_config = {
-        # 1. Tighten the baseline. Tell the model sales start near the average of your data.
         "intercept": {"dist": "Normal", "kwargs": {"mu": 0, "sigma": 0.1}},
         
-        # 2. Tighten the 'Noise'. This forces the blue line to hug the black dots 
-        # instead of floating in a giant cloud of uncertainty.
         "likelihood": {"dist": "Normal", "kwargs": {"sigma": {"dist": "HalfNormal", "kwargs": {"sigma": 0.05}}}},
         
-        # 3. Reduce seasonality's power so it doesn't create those giant ghost waves.
         "yearly_seasonality": {"dist": "Normal", "kwargs": {"mu": 0, "sigma": 0.05}},
 }            
     )
@@ -137,6 +137,10 @@ def run_mmm_training(df):
     # y = df['Sales_Value'].rename("y")
 
     mmm.fit(X, y_scaled, target_accept=0.9, draws=1000, tune=1000)
+
+    joblib.dump(spend_scaler, "models/spendscaler.joblib")
+    joblib.dump(sales_scaler, "models/salesscaler.joblib")
+    print("Scalers saved to models/")
 
     # 3. View the "built-in" results immediately
     # mmm.plot_components_contributions()

@@ -7,7 +7,7 @@ from utils import unscale_sales  # Import your working helper
 
 def plot_saturation_curves():
     print("Loading model and calculating curves...")
-    mmm = MMM.load("models/mmm_model_v1.nc")
+    mmm = MMM.load("models/mmm_model_v1_multi.nc")
     spend_scaler = joblib.load("models/spendscaler.joblib")
     
     # 1. Use the built-in helper to get the curve data

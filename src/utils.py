@@ -31,4 +31,9 @@ def unscale_spend(scaled_spend_data):
     
     return scaler.inverse_transform(data_array)
 
+def get_distinct_geos(df):
+    "extracts geographic locations from dataframes"
+    geo_list = df['Geo'].unique().tolist()
+    return geo_list
+
 

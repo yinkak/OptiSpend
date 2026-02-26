@@ -1,38 +1,45 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
-from pymc_marketing.mmm import MMM
+#from pymc_marketing.mmm import MMM
+from pymc_marketing.mmm.multidimensional import MMM
 import os
 from utils import unscale_sales
 
 
-def calculate_roas(df_results, raw_data_path):
-    """
-    Calculates Return on Ad Spend (ROAS) by comparing attributed revenue
-    to actual historical costs.
-    """
+def calculate_roas(df_results, raw_data_path, loaded_mmm):
     raw_data = pd.read_csv(raw_data_path)
     
-    # We iterate through the revenue results we just calculated
+    contribution_data = loaded_mmm.idata.posterior["channel_contribution"]
+    # 1. Print Regional Contribution ONCE
+    if "Geo" in contribution_data.dims:
+        geo_contrib_scaled = contribution_data.sum(dim=["date", "channel"]).mean(dim=["chain", "draw"])
+        print("--- Sales Contribution by Geography ---")
+        for geo in geo_contrib_scaled.Geo.values:
+            val = geo_contrib_scaled.sel(Geo=geo).values
+            print(f"{geo}: {val}")
+    
+    print("--- Sales Contribution by Geography ---")
+    # Use geo_contrib_scaled.Geo (Capitalized)
+    for geo in geo_contrib_scaled.Geo.values:
+        val = geo_contrib_scaled.sel(Geo=geo).values
+        print(f"{geo}: {val}")
+
+    # 2. Calculate Channel ROAS
     for i, row in df_results.iterrows():
         channel_name = row['Channel']
         total_revenue = row['Total_Sales_Contribution']
-        
-        # Get the actual total spend from the raw data
         total_cost = raw_data[channel_name].sum()
         
-        # Calculate ROAS (Revenue / Cost)
-        roas = total_revenue / total_cost if total_cost > 0 else 0
-        
         df_results.at[i, 'Total_Cost'] = total_cost
-        df_results.at[i, 'ROAS'] = roas
+        df_results.at[i, 'ROAS'] = total_revenue / total_cost if total_cost > 0 else 0
     
     return df_results
 
 
 def run_reporting():
     print("Loading model...")
-    loaded_mmm = MMM.load("models/mmm_model_v1.nc")
+    loaded_mmm = MMM.load("models/mmm_model_v1_multi.nc")
     
     # 1. Manually calculate the mean contribution from the posterior
     # This replaces the missing 'compute_channel_contribution_stats'
@@ -40,8 +47,11 @@ def run_reporting():
     
     # We take the mean across chains, draws, and time (date)
     # The result is a series where index = channel names
+    # Change this line to sum over BOTH date and geo for a national view
+    print("Extracting channel contributions...")
     contributions_scaled = loaded_mmm.idata.posterior["channel_contribution"].sum(
-        dim="date").mean(dim=["chain", "draw"]).to_series()
+        dim=["date", "Geo"]
+    ).mean(dim=["chain", "draw"]).to_series()
     
     channels = ['TV_Spend', 'YouTube_Spend', 'Facebook_Spend', 'Instagram_Spend']
     summary_data = []
@@ -61,14 +71,16 @@ def run_reporting():
     df_results = pd.DataFrame(summary_data)
 
     # Extract the Intercept (Baseline Sales)
-    intercept_scaled = loaded_mmm.idata.posterior["intercept"].mean(dim=["chain", "draw"])
+    # Change "intercept" to "intercept_contribution"
+    intercept_scaled = loaded_mmm.idata.posterior["intercept_contribution"].mean(dim=["chain", "draw"])
     real_intercept = unscale_sales(intercept_scaled)[0][0]
-
     print(f"Total Baseline (Organic) Sales: ${real_intercept:,.2f}")
+    
 
     # 1. Calculate the Business Metrics
     raw_data_path = "data/processed/cleaned_marketing_data.csv"
-    df_final = calculate_roas(df_results, raw_data_path)
+    # Add loaded_mmm as the third argument
+    df_final = calculate_roas(df_results, raw_data_path, loaded_mmm)
     
     print("\n--- Marketing Effectiveness Report ---")
     print(df_final[['Channel', 'Total_Sales_Contribution', 'Total_Cost', 'ROAS']])

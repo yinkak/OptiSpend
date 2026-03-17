@@ -62,7 +62,7 @@ global_lower = st.sidebar.number_input("Min Spend per Cell ($)", value=1000)
 global_upper = st.sidebar.number_input("Max Spend per Cell ($)", value=60000)
 
 # --- 4. TABS SETUP ---
-tab1, tab2, tab3 = st.tabs(["🎯 Budget Optimization", "📈 Sales Forecasting", "📊 Model Health"])
+tab1, tab2, tab3, tab4= st.tabs(["🎯 Budget Optimization", "📈 Sales Forecasting", "📊 Model Health", "🧪 Experimentation"])
 
 # --- TAB 1: OPTIMIZATION ---
 with tab1:
@@ -166,9 +166,7 @@ with tab3:
     st.header("📊 Saturation & ROI")
     
     # 1. Extract Contribution for Pie Chart
-    # We pull 'channel_contribution' from the posterior and take the median
     if "channel_contribution" in mmm.idata.posterior:
-        # Summing across 'chain', 'draw', 'date', and 'Geo' to get total per channel
         total_contrib = mmm.idata.posterior["channel_contribution"].sum(dim=["date", "Geo"]).median(dim=["chain", "draw"])
         contrib_df = total_contrib.to_series()
         
@@ -184,9 +182,82 @@ with tab3:
             
         with col2:
             st.subheader("Channel Effectiveness (Betas)")
-            # Pull the 'saturation_beta' which represents the strength of each channel
             betas = mmm.idata.posterior["saturation_beta"].mean(dim=["chain", "draw", "Geo"]).to_series()
             betas.index = [c.replace('"', '') for c in betas.index]
             st.bar_chart(betas)
     else:
         st.warning("Channel contribution data not found in model. Try re-running the optimization to populate results.")
+
+
+
+with tab4:
+    st.header("🧪 Incrementality Test (Causal Inference)")
+    st.write("Determine the true 'lift' of a specific marketing event by comparing it to synthetic control regions.")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        target_geo = st.selectbox("Select Target Region for Test", options=data['Geo'].unique())
+        test_start = st.date_input("Campaign Start Date", value=pd.to_datetime("2023-11-04"))
+        
+    with col2:
+        control_geos = [g for g in data['Geo'].unique() if g != target_geo]
+        st.write(f"**Control Regions:** {', '.join(control_geos)}")
+        test_end = st.date_input("Campaign End Date", value=pd.to_datetime("2024-01-13"))
+
+    if st.button("Analyze Campaign Impact"):
+        with st.spinner("Building Bayesian Structural Time Series..."):
+            # 1. Prepare Data
+            df_agg = data.groupby(['Week', 'Geo'])['Sales_Value'].sum().reset_index()
+            analysis_df = df_agg.pivot(index='Week', columns='Geo', values='Sales_Value')
+            
+            # Reorder: Target first, then controls
+            cols = [target_geo] + control_geos
+            analysis_df = analysis_df[cols]
+            
+            # 2. Define Periods
+            available_dates = analysis_df.index
+
+            test_start_ts = pd.Timestamp(test_start)
+            test_end_ts = pd.Timestamp(test_end)
+
+            pre_end = available_dates[available_dates < test_start_ts].max()
+            pre_start = available_dates.min()
+
+            post_start = available_dates[available_dates >= test_start_ts].min()
+            post_end = available_dates[available_dates <= test_end_ts].max()
+
+            if pd.isnull(post_start) or pd.isnull(post_end):
+                st.error("Selected dates fall outside the range of the dataset. Please adjust.")
+            else:
+                pre_period = [str(pre_start.date()), str(pre_end.date())]
+                post_period = [str(post_start.date()), str(post_end.date())]
+
+            
+            # 3. Run CausalImpact
+            from causalimpact import CausalImpact
+            ci = CausalImpact(analysis_df, pre_period, post_period)
+            
+            # 4. Display Results
+            st.subheader("Results Summary")
+            try:
+                # Accessing the relative effect from the summary table
+                lift_val = ci.summary_data.loc['rel_effect', 'average']
+                lift = lift_val * 100
+                prob = 1 - ci.p_value # Confidence
+            except Exception as e:
+                lift = 0.0
+                prob = 0.0
+                st.error(f"Data mapping error: {e}")
+                        
+            stat_col1, stat_col2 = st.columns(2)
+            stat_col1.metric("Relative Lift", f"{lift:.2f}%")
+            stat_col2.metric("Stat. Confidence", f"{(1-prob)*100:.1f}%")
+            
+            # 5. Show the Plot
+            fig = ci.plot()
+            st.pyplot(fig)
+            
+            # 6. Professional Interpretation
+            st.info(f"**Insight:** The campaign in {target_geo} resulted in a "
+                    f"{'positive' if lift > 0 else 'negative'} incremental impact. "
+                    f"The probability of this being a fluke is {prob*100:.2f}%.")

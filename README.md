@@ -69,15 +69,15 @@ Unlike traditional models, OptiSpend includes a Causal Inference module. By defi
 
 ## 📈 Roadmap
 
--  **Phase 1-3: Core MMM Engine & Optimizer**
+- **Phase 1-3: Core MMM Engine & Optimizer**
   - Bayesian hierarchical modeling with PyMC.
   - Custom utility functions for budget reallocation.
   - Interactive Streamlit dashboard for ROI visualization.
--  **Phase 4: Forecasting & Experimentation**
+- **Phase 4: Forecasting & Experimentation**
   - Integrated Prophet modules for baseline sales projection.
   - CausalImpact implementation for incremental lift analysis.
   - Automated data-snapping for weekly time-series alignment.
--  **Phase 5: Cloud Deployment & Scalability**
+- **Phase 5: Cloud Deployment & Scalability**
   - Deploy to Streamlit Cloud for live stakeholder access.
   - Optimize model pickling for faster load times.
   - Add API endpoints for automated weekly data ingestion.

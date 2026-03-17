@@ -78,9 +78,9 @@ Unlike traditional models, OptiSpend includes a Causal Inference module. By defi
   - CausalImpact implementation for incremental lift analysis.
   - Automated data-snapping for weekly time-series alignment.
 - **Phase 5: Cloud Deployment & Scalability**
-  - Deploy to Streamlit Cloud for live stakeholder access.
-  - Optimize model pickling for faster load times.
-  - Add API endpoints for automated weekly data ingestion.
+  - Deployed to Streamlit Cloud for live stakeholder access.
+  - Optimized model pickling for faster load times.
+  - Added API endpoints for automated weekly data ingestion.
 
 
 ### Model Storage & GitHub Constraints
@@ -102,5 +102,5 @@ If you wish to perform analysis or run the dashboard, you must generate the trac
 3. The script will output the mmm_trace.nc file into the models/ directory, which is ignored by Git.
 
 ## Contact & Contributions
-Developed by Yinka Kolawole – feel free to reach out via [LinkedIn](https://www.linkedin.com/in/olayinka-kolawole/) or open an issue for collaboration!
+Developed by [Yinka Kolawole](https://github.com/yinkak) – feel free to reach out via [LinkedIn](https://www.linkedin.com/in/olayinka-kolawole/) or open an issue for collaboration!
 

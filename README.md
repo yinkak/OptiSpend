@@ -20,12 +20,31 @@ OptiSpend is an end-to-end marketing analytics suite designed to quantify the im
 ## 📊 How it Works
 
 ### 1. The Model (Marketing Mix Modeling)
-The core engine uses a Logistic Saturation function to model diminishing returns. **  **
+The core engine uses a Logistic Saturation function to model diminishing returns.   
 
 $$Contribution = \beta \cdot \frac{1 - e^{-\alpha \cdot spend}}{1 + e^{-\alpha \cdot spend}}$$
 
 
 It accounts for geography-specific nuances through hierarchical priors, allowing the model to "learn" from one region to inform another.
+
+## 📂 Project Structure
+
+```text
+OptiSpend/
+├── app/
+│   └── main.py            
+├── data/
+│   ├── raw/               
+│   └── processed/         
+├── models/                
+├── src/
+│   ├── train.py           
+│   ├── causal_analysis.py 
+│   └── utils.py           
+├── reports/               
+├── requirements.txt
+└── README.md
+```
 
 ### 2. The Experimentation Lab
 Unlike traditional models, OptiSpend includes a Causal Inference module. By defining a "Pre-Period" and "Post-Period," the system builds a synthetic control group to isolate the **true incremental lift** of a campaign, filtering out seasonality and market noise.
@@ -43,7 +62,7 @@ Unlike traditional models, OptiSpend includes a Causal Inference module. By defi
    pip install -r requirements.txt
    ```
 
-3. **Install Dependencies:**
+3. **Launch the app:**
     ```bash
     streamlit run app/main.py
     ```

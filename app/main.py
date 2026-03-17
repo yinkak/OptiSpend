@@ -29,7 +29,35 @@ geo_list = sorted(data["Geo"].unique())
 
 # --- 3. SIDEBAR ---
 st.sidebar.header("🕹️ Optimization Controls")
-total_budget = st.sidebar.slider("Total Weekly Budget ($)", 50000, 2000000, 1000000, 50000)
+
+# Initialize session state for budget if it doesn't exist
+if 'total_budget' not in st.session_state:
+    st.session_state.total_budget = 1000000
+
+# 1. Manual Number Input
+manual_budget = st.sidebar.number_input(
+    "Total Weekly Budget ($) - Manual Input",
+    min_value=50000,
+    max_value=2000000,
+    value=st.session_state.total_budget,
+    step=10000,
+    key="budget_input"
+)
+
+# 2. Slider Input (Linked to the same value)
+# We use st.session_state.total_budget to sync them
+total_budget = st.sidebar.slider(
+    "Total Weekly Budget ($) - Slider", 
+    min_value=50000, 
+    max_value=2000000, 
+    value=manual_budget, # Forces slider to follow the manual input
+    step=50000
+)
+
+# Update the state so the rest of the app uses 'total_budget'
+st.session_state.total_budget = total_budget
+
+st.sidebar.subheader("Bounds Settings")
 global_lower = st.sidebar.number_input("Min Spend per Cell ($)", value=1000)
 global_upper = st.sidebar.number_input("Max Spend per Cell ($)", value=60000)
 

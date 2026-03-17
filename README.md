@@ -101,4 +101,6 @@ If you wish to perform analysis or run the dashboard, you must generate the trac
    ```
 3. The script will output the mmm_trace.nc file into the models/ directory, which is ignored by Git.
 
+## ✉️ Contact & Contributions
+Developed by Yinka Kolawole – feel free to reach out via [LinkedIn](https://www.linkedin.com/in/olayinka-kolawole/) or open an issue for collaboration!
 

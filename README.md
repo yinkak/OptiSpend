@@ -1,15 +1,15 @@
-# 🎯 OptiSpend: Bayesian Marketing Mix Modeling & Optimization
+# OptiSpend: Bayesian Marketing Mix Modeling & Optimization
 
 OptiSpend is an end-to-end marketing analytics suite designed to quantify the impact of media spend across multiple geographies and channels. Using Bayesian Structural Time Series and Causal Inference, it transforms raw marketing data into actionable budget reallocations.
 
-## 🚀 Key Features
+## Key Features
 
 * **Bayesian MMM:** A hierarchical model that estimates saturation and decay (adstock) effects of media spend.
 * **Budget Optimizer:** Uses a custom utility function to find the "Maximum Yield" budget allocation across regions.
 * **Forecasting Lab:** Integrated with Facebook Prophet to predict baseline sales trends and future acquisition.
 * **Causal Inference:** An experimentation module using Google's `CausalImpact` to measure incremental lift from specific marketing interventions.
 
-## 🛠️ Technical Stack
+## Technical Stack
 
 * **Language:** Python 3.12
 * **Modeling:** `PyMC` (Bayesian Inference), `Prophet` (Time-Series Forecasting)
@@ -17,7 +17,7 @@ OptiSpend is an end-to-end marketing analytics suite designed to quantify the im
 * **Frontend:** `Streamlit` (Interactive Dashboard)
 * **Optimization:** `Scipy.optimize` (Sequential Least Squares Programming)
 
-## 📊 How it Works
+## How it Works
 
 ### 1. The Model (Marketing Mix Modeling)
 The core engine uses a Logistic Saturation function to model diminishing returns.   
@@ -49,7 +49,7 @@ OptiSpend/
 ### 2. The Experimentation Lab
 Unlike traditional models, OptiSpend includes a Causal Inference module. By defining a "Pre-Period" and "Post-Period," the system builds a synthetic control group to isolate the **true incremental lift** of a campaign, filtering out seasonality and market noise.
 
-## 🏃 Run it Locally
+## Run it Locally
 
 1. **Clone the Repo:**
    ```bash
@@ -69,21 +69,21 @@ Unlike traditional models, OptiSpend includes a Causal Inference module. By defi
 
 ## 📈 Roadmap
 
-- [x] **Phase 1-3: Core MMM Engine & Optimizer**
+-  **Phase 1-3: Core MMM Engine & Optimizer**
   - Bayesian hierarchical modeling with PyMC.
   - Custom utility functions for budget reallocation.
   - Interactive Streamlit dashboard for ROI visualization.
-- [x] **Phase 4: Forecasting & Experimentation**
+-  **Phase 4: Forecasting & Experimentation**
   - Integrated Prophet modules for baseline sales projection.
   - CausalImpact implementation for incremental lift analysis.
   - Automated data-snapping for weekly time-series alignment.
-- [ ] **Phase 5: Cloud Deployment & Scalability**
+-  **Phase 5: Cloud Deployment & Scalability**
   - Deploy to Streamlit Cloud for live stakeholder access.
   - Optimize model pickling for faster load times.
   - Add API endpoints for automated weekly data ingestion.
 
 
-### 📦 Model Storage & GitHub Constraints
+### Model Storage & GitHub Constraints
 
 The core model output (`mmm_trace.nc`) is a high-dimensional Bayesian trace file approximately **538 MB** in size. 
 
@@ -101,6 +101,6 @@ If you wish to perform analysis or run the dashboard, you must generate the trac
    ```
 3. The script will output the mmm_trace.nc file into the models/ directory, which is ignored by Git.
 
-## ✉️ Contact & Contributions
+## Contact & Contributions
 Developed by Yinka Kolawole – feel free to reach out via [LinkedIn](https://www.linkedin.com/in/olayinka-kolawole/) or open an issue for collaboration!
 

@@ -55,7 +55,7 @@ channels = ["TV_Spend", "YouTube_Spend", "Facebook_Spend", "Instagram_Spend"]
 geo_list = sorted(data["Geo"].unique()) if not data.empty else ["NORTH", "SOUTH", "EAST", "WEST"]
 
 # --- 3. SIDEBAR ---
-st.sidebar.header("🕹️ Optimization Controls")
+st.sidebar.header("Optimization Controls")
 
 # Initialize session state for budget if it doesn't exist
 if 'total_budget' not in st.session_state:
@@ -194,7 +194,7 @@ with tab1:
 
 # --- TAB 2: FORECASTING ---
 with tab2:
-    st.header("📈 Organic Baseline Forecast")
+    st.header("Organic Baseline Forecast")
     st.write("Predicting future sales by stripping away marketing impact to find the brand's 'true' pulse.")
 
     if is_demo_mode:
@@ -230,7 +230,7 @@ with tab2:
 
 # --- TAB 3: MODEL HEALTH ---
 with tab3:
-    st.header("📊 Saturation & ROI")
+    st.header("Saturation & ROI")
 
     if is_demo_mode:
         st.info("💡 Showing pre-calculated results from the Bayesian Posterior (Demo Mode).")
@@ -275,7 +275,7 @@ with tab3:
 
 
 with tab4:
-    st.header("🧪 Incrementality Test (Causal Inference)")
+    st.header("Incrementality Test (Causal Inference)")
     st.write("Determine the true 'lift' of a specific marketing event by comparing it to synthetic control regions.")
 
     if is_demo_mode:

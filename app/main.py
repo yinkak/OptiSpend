@@ -15,52 +15,39 @@ from src.forecaster import get_prophet_ready_data, run_prophet_forecast, plot_fo
 # --- 1. PAGE CONFIG ---
 st.set_page_config(page_title="OptiSpend AI Optimizer", layout="wide")
 
+# --- 2. CONSOLIDATED DATA & MODEL LOADING ---
+
 @st.cache_resource
 def load_mmm_model():
-    # Construct the path relative to the root of the repo
     model_path = os.path.join(os.getcwd(), "models", "mmm_model_v1_multi.nc")
-    
-    # Check if the file exists BEFORE attempting to load it
     if os.path.exists(model_path):
         try:
-            # Only run this if the file is physically present
             return MMM.load(model_path)
         except Exception as e:
-            st.error(f"Error loading model file: {e}")
+            st.error(f"Error loading model: {e}")
             return None
-    else:
-        # File is missing (expected in Streamlit Cloud)
-        # We return None instead of crashing
-        return None
-
-# Now call it safely
-mmm = load_mmm_model()
-
-if mmm is None:
-    st.warning("🚀 **Running in Demo Mode**")
-    st.info("The 500MB+ Bayesian model is hosted locally to comply with GitHub limits. Showing sample metrics.")
-    # Here, you would set your 'mmm' variables to dummy data so the charts don't break
-else:
-    st.success("Bayesian Model Loaded Successfully")
-
-
-
-# --- 2. CACHED DATA LOADING ---
-@st.cache_resource
-def load_mmm_model():
-    return MMM.load("models/mmm_model_v1_multi.nc")
+    return None
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("data/processed/cleaned_marketing_data.csv")
-    df["Week"] = pd.to_datetime(df["Week"])
-    return df
+    # Adding a check for the data file too, just in case!
+    data_path = "data/processed/cleaned_marketing_data.csv"
+    if os.path.exists(data_path):
+        df = pd.read_csv(data_path)
+        df["Week"] = pd.to_datetime(df["Week"])
+        return df
+    return pd.DataFrame() # Return empty df if missing
 
-# Load assets
+# EXECUTE LOADING ONCE
 mmm = load_mmm_model()
 data = load_data()
+
+# Identify if we are in Demo Mode
+is_demo_mode = mmm is None
+
+# Define shared variables
 channels = ["TV_Spend", "YouTube_Spend", "Facebook_Spend", "Instagram_Spend"]
-geo_list = sorted(data["Geo"].unique())
+geo_list = sorted(data["Geo"].unique()) if not data.empty else ["NORTH", "SOUTH", "EAST", "WEST"]
 
 # --- 3. SIDEBAR ---
 st.sidebar.header("🕹️ Optimization Controls")

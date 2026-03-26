@@ -12,6 +12,27 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.forecaster import get_prophet_ready_data, run_prophet_forecast, plot_forecast
 
+@st.cache_resource
+def load_mmm_model():
+    model_path = "models/mmm_model_v1_multi.nc"
+    
+    if not os.path.exists(model_path):
+        return None
+        
+    try:
+        return MMM.load(model_path) 
+    except Exception as e:
+        st.error(f"Failed to load model: {e}")
+        return None
+
+mmm = load_mmm_model()
+
+if mmm is None:
+    st.warning("⚠️ **Running in Demo Mode:** The full Bayesian model file (`mmm_model_v1_multi.nc`) is not present in this environment due to storage limits. The dashboard is currently displaying pre-calculated sample data.")
+    demo_mode = True
+else:
+    demo_mode = False
+
 # --- 1. PAGE CONFIG ---
 st.set_page_config(page_title="OptiSpend AI Optimizer", layout="wide")
 

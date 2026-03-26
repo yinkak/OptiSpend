@@ -93,7 +93,7 @@ tab1, tab2, tab3, tab4= st.tabs(["🎯 Budget Optimization", "📈 Sales Forecas
 
 # --- TAB 1: OPTIMIZATION ---
 with tab1:
-    st.title("🚀 OptiSpend: AI Media Allocation")
+    st.title("OptiSpend: AI Media Allocation")
     st.markdown("Optimize spend across **Geos** and **Channels** using Bayesian MMM.")
 
     if is_demo_mode:
@@ -104,12 +104,12 @@ with tab1:
         
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("📊 Recommended Allocation")
+            st.subheader("Recommended Allocation")
             # Unstacking to match the original UI layout
             st.dataframe(opt_df.set_index(['Geo', 'channel']).unstack().style.format("${:,.0f}"))
             
         with col2:
-            st.subheader("📈 Strategy Comparison")
+            st.subheader("Strategy Comparison")
             # Here you can show a static bar chart using opt_df
             st.bar_chart(opt_df.groupby("Geo")["Spend"].sum())
             

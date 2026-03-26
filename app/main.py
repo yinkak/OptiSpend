@@ -213,7 +213,7 @@ with tab3:
     if is_demo_mode:
         st.info("💡 Showing pre-calculated results from the Bayesian Posterior (Demo Mode).")
         # Load the lightweight CSVs you just created
-        demo_roi = pd.read_csv("data/processed/demo_roi.csv", index_index=0)
+        demo_roi = pd.read_csv("data/processed/demo_roi.csv", index_col=0)
         demo_contrib = pd.read_csv("data/processed/demo_contribution.csv", index_col=0)
         
         col1, col2 = st.columns(2)

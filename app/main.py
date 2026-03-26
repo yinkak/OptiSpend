@@ -191,20 +191,37 @@ with tab1:
 with tab2:
     st.header("📈 Organic Baseline Forecast")
     st.write("Predicting future sales by stripping away marketing impact to find the brand's 'true' pulse.")
+
+    if is_demo_mode:
+        # --- DEMO MODE UI ---
+        st.info("💡 **Demo Preview:** This section uses Facebook's Prophet to decompose the Bayesian 'Baseline' (Organic) sales.")
+        st.warning("Forecasting requires the live 500MB posterior trace file to calculate historical media contribution.")
+        
+        # Display a sample image of what your Prophet forecast looks like
+        # (Assuming you have a screenshot in your reports folder)
+        st.image("reports/sample_forecast.png", caption="Sample 12-Week Sales Forecast (Organic Baseline)")
+        
+        st.markdown("""
+        **What's happening here?**
+        1. We extract the 'intercept' and 'control' effects from the Bayesian model.
+        2. We subtract all media-driven sales to find the **Organic Baseline**.
+        3. We pass that baseline to a **Prophet** model to predict future growth without marketing spend.
+        """)
     
-    if st.button("🔮 Generate 12-Week Forecast"):
-        with st.spinner("Decomposing baseline and running Prophet..."):
-            prophet_df = get_prophet_ready_data(mmm, data)
-            model, forecast = run_prophet_forecast(prophet_df, periods=12)
-            
-            # Show Plot
-            fig = plot_forecast(model, forecast)
-            st.pyplot(fig)
-            
-            # Show Components (Trend/Seasonality)
-            st.subheader("Forecast Components")
-            fig2 = model.plot_components(forecast)
-            st.pyplot(fig2)
+    else:
+        if st.button("🔮 Generate 12-Week Forecast"):
+            with st.spinner("Decomposing baseline and running Prophet..."):
+                prophet_df = get_prophet_ready_data(mmm, data)
+                model, forecast = run_prophet_forecast(prophet_df, periods=12)
+                
+                # Show Plot
+                fig = plot_forecast(model, forecast)
+                st.pyplot(fig)
+                
+                # Show Components (Trend/Seasonality)
+                st.subheader("Forecast Components")
+                fig2 = model.plot_components(forecast)
+                st.pyplot(fig2)
 
 # --- TAB 3: MODEL HEALTH ---
 with tab3:

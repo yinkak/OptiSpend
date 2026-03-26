@@ -25,6 +25,12 @@ models/*.nc
 data/raw/*.csv
 data/processed/*.csv
 
+
+!data/processed/demo_optimal_spend.csv
+!data/processed/demo_roi.csv
+!data/processed/demo_contribution.csv
+!data/processed/cleaned_marketing_data.csv
+
 # Python
 venv/
 __pycache__/

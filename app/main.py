@@ -12,29 +12,38 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.forecaster import get_prophet_ready_data, run_prophet_forecast, plot_forecast
 
+# --- 1. PAGE CONFIG ---
+st.set_page_config(page_title="OptiSpend AI Optimizer", layout="wide")
+
 @st.cache_resource
 def load_mmm_model():
-    model_path = "models/mmm_model_v1_multi.nc"
+    # Construct the path relative to the root of the repo
+    model_path = os.path.join(os.getcwd(), "models", "mmm_model_v1_multi.nc")
     
-    if not os.path.exists(model_path):
-        return None
-        
-    try:
-        return MMM.load(model_path) 
-    except Exception as e:
-        st.error(f"Failed to load model: {e}")
+    # Check if the file exists BEFORE attempting to load it
+    if os.path.exists(model_path):
+        try:
+            # Only run this if the file is physically present
+            return MMM.load(model_path)
+        except Exception as e:
+            st.error(f"Error loading model file: {e}")
+            return None
+    else:
+        # File is missing (expected in Streamlit Cloud)
+        # We return None instead of crashing
         return None
 
+# Now call it safely
 mmm = load_mmm_model()
 
 if mmm is None:
-    st.warning("⚠️ **Running in Demo Mode:** The full Bayesian model file (`mmm_model_v1_multi.nc`) is not present in this environment due to storage limits. The dashboard is currently displaying pre-calculated sample data.")
-    demo_mode = True
+    st.warning("🚀 **Running in Demo Mode**")
+    st.info("The 500MB+ Bayesian model is hosted locally to comply with GitHub limits. Showing sample metrics.")
+    # Here, you would set your 'mmm' variables to dummy data so the charts don't break
 else:
-    demo_mode = False
+    st.success("Bayesian Model Loaded Successfully")
 
-# --- 1. PAGE CONFIG ---
-st.set_page_config(page_title="OptiSpend AI Optimizer", layout="wide")
+
 
 # --- 2. CACHED DATA LOADING ---
 @st.cache_resource

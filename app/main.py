@@ -5,6 +5,11 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pymc_marketing.mmm.multidimensional import MMM, MultiDimensionalBudgetOptimizerWrapper
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from src.forecaster import get_prophet_ready_data, run_prophet_forecast, plot_forecast
 
 # --- 1. PAGE CONFIG ---

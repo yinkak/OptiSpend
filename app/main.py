@@ -91,78 +91,101 @@ with tab1:
     st.title("🚀 OptiSpend: AI Media Allocation")
     st.markdown("Optimize spend across **Geos** and **Channels** using Bayesian MMM.")
 
-    if st.sidebar.button("⚡ Run Optimization"):
-        with st.spinner("Finding optimal allocation..."):
+    if is_demo_mode:
+        st.warning("⚠️ **Demo Mode Active:** Showing an optimized allocation for a **$1,000,000** weekly budget.")
+        
+        # Load the pre-calculated result
+        opt_df = pd.read_csv("data/processed/demo_optimal_spend.csv")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("📊 Recommended Allocation")
+            # Unstacking to match the original UI layout
+            st.dataframe(opt_df.set_index(['Geo', 'channel']).unstack().style.format("${:,.0f}"))
             
-            # 1. Setup Wrapper (Simplified for App)
-            start = data["Week"].max() + pd.Timedelta(weeks=1)
-            end = start + pd.Timedelta(weeks=8)
-            wrapper = MultiDimensionalBudgetOptimizerWrapper(mmm, start_date=start, end_date=end)
+        with col2:
+            st.subheader("📈 Strategy Comparison")
+            # Here you can show a static bar chart using opt_df
+            st.bar_chart(opt_df.groupby("Geo")["Spend"].sum())
             
-            # 2. Setup Bounds
-            num_geos, num_channels = len(geo_list), len(channels)
-            bounds_values = np.zeros((num_geos, num_channels, 2))
-            bounds_values[:, :, 0] = global_lower
-            bounds_values[:, :, 1] = global_upper
-            
-            bounds_da = xr.DataArray(
-                bounds_values,
-                dims=["Geo", "channel", "bound"],
-                coords={"Geo": geo_list, "channel": channels, "bound": ["lower", "upper"]}
-            )
-            
-            # Targeted Override
-            bounds_da.loc[{"Geo": "NORTH", "channel": "Facebook_Spend", "bound": "upper"}] = 60000.0
-            bounds_da.loc[{"Geo": "WEST", "channel": "TV_Spend", "bound": "upper"}] = 60000.0
+        st.info("On a local machine, the 'Run Optimization' button triggers a live SLSQP solver to handle custom budgets and constraints.")
 
-            # 3. Optimize
-            beta_values = mmm.idata.posterior["saturation_beta"].mean(("chain", "draw")).values
-            
-            def app_utility(samples, budgets, **kwargs):
-                import pytensor.tensor as pt
-                beta_tensor = pt.as_tensor_variable(beta_values)
-                return pt.mean(samples.sum()) + (budgets * beta_tensor).sum() * 1e-4
-
-            optimal, res = wrapper.optimize_budget(
-                budget=float(total_budget),
-                budget_bounds=bounds_da,
-                response_variable="total_media_contribution_original_scale",
-                utility_function=app_utility,
-            )
-
-            # --- RESULTS LAYOUT ---
-            col1, col2 = st.columns([1, 1])
-
-            with col1:
-                st.subheader("📊 Recommended Allocation")
-                st.dataframe(optimal.to_dataframe(name="Spend").unstack(level=1).style.format("${:,.0f}"))
-
-            with col2:
-                st.subheader("📈 Strategy Comparison")
-                # Calculate BAU
-                hist_totals = data.groupby("Geo")[channels].sum()
-                hist_mix = hist_totals / hist_totals.values.sum()
-                bau_values = hist_mix.values * total_budget
-                
-                # Simple Plot
-                opt_df = optimal.to_dataframe(name="Spend").reset_index()
-                opt_df["Scenario"] = "AI Optimal"
-                bau_df = pd.DataFrame(bau_values, index=hist_mix.index, columns=channels).stack().reset_index()
-                bau_df.columns = ["Geo", "channel", "Spend"]
-                bau_df["Scenario"] = "Historical Mix"
-                
-                comparison_df = pd.concat([opt_df, bau_df])
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.barplot(data=comparison_df, x="Geo", y="Spend", hue="Scenario", ax=ax)
-                plt.xticks(rotation=45)
-                st.pyplot(fig)
-
-            # --- EXPORT ---
-            csv = optimal.to_dataframe(name="Weekly_Spend").to_csv().encode('utf-8')
-            st.download_button("📂 Download Media Brief (CSV)", data=csv, file_name="optispend_brief.csv")
 
     else:
-        st.info("Adjust the settings on the left and click 'Run Optimization'.")
+        if st.sidebar.button("⚡ Run Optimization"):
+            with st.spinner("Finding optimal allocation..."):
+                
+                # 1. Setup Wrapper (Simplified for App)
+                start = data["Week"].max() + pd.Timedelta(weeks=1)
+                end = start + pd.Timedelta(weeks=8)
+                wrapper = MultiDimensionalBudgetOptimizerWrapper(mmm, start_date=start, end_date=end)
+                
+                # 2. Setup Bounds
+                num_geos, num_channels = len(geo_list), len(channels)
+                bounds_values = np.zeros((num_geos, num_channels, 2))
+                bounds_values[:, :, 0] = global_lower
+                bounds_values[:, :, 1] = global_upper
+                
+                bounds_da = xr.DataArray(
+                    bounds_values,
+                    dims=["Geo", "channel", "bound"],
+                    coords={"Geo": geo_list, "channel": channels, "bound": ["lower", "upper"]}
+                )
+                
+                # Targeted Override
+                bounds_da.loc[{"Geo": "NORTH", "channel": "Facebook_Spend", "bound": "upper"}] = 60000.0
+                bounds_da.loc[{"Geo": "WEST", "channel": "TV_Spend", "bound": "upper"}] = 60000.0
+
+                # 3. Optimize
+                beta_values = mmm.idata.posterior["saturation_beta"].mean(("chain", "draw")).values
+                
+                def app_utility(samples, budgets, **kwargs):
+                    import pytensor.tensor as pt
+                    beta_tensor = pt.as_tensor_variable(beta_values)
+                    return pt.mean(samples.sum()) + (budgets * beta_tensor).sum() * 1e-4
+
+                optimal, res = wrapper.optimize_budget(
+                    budget=float(total_budget),
+                    budget_bounds=bounds_da,
+                    response_variable="total_media_contribution_original_scale",
+                    utility_function=app_utility,
+                )
+
+                # --- RESULTS LAYOUT ---
+                col1, col2 = st.columns([1, 1])
+
+                with col1:
+                    st.subheader("📊 Recommended Allocation")
+                    st.dataframe(optimal.to_dataframe(name="Spend").unstack(level=1).style.format("${:,.0f}"))
+
+                with col2:
+                    st.subheader("📈 Strategy Comparison")
+                    # Calculate BAU
+                    hist_totals = data.groupby("Geo")[channels].sum()
+                    hist_mix = hist_totals / hist_totals.values.sum()
+                    bau_values = hist_mix.values * total_budget
+                    
+                    # Simple Plot
+                    opt_df = optimal.to_dataframe(name="Spend").reset_index()
+                    opt_df["Scenario"] = "AI Optimal"
+                    bau_df = pd.DataFrame(bau_values, index=hist_mix.index, columns=channels).stack().reset_index()
+                    bau_df.columns = ["Geo", "channel", "Spend"]
+                    bau_df["Scenario"] = "Historical Mix"
+                    
+                    comparison_df = pd.concat([opt_df, bau_df])
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    sns.barplot(data=comparison_df, x="Geo", y="Spend", hue="Scenario", ax=ax)
+                    plt.xticks(rotation=45)
+                    st.pyplot(fig)
+
+                # --- EXPORT ---
+                csv = optimal.to_dataframe(name="Weekly_Spend").to_csv().encode('utf-8')
+                st.download_button("📂 Download Media Brief (CSV)", data=csv, file_name="optispend_brief.csv")
+
+        else:
+            st.info("Adjust the settings on the left and click 'Run Optimization'.")
+        
+        pass
 
 # --- TAB 2: FORECASTING ---
 with tab2:
@@ -186,29 +209,46 @@ with tab2:
 # --- TAB 3: MODEL HEALTH ---
 with tab3:
     st.header("📊 Saturation & ROI")
-    
-    # 1. Extract Contribution for Pie Chart
-    if "channel_contribution" in mmm.idata.posterior:
-        total_contrib = mmm.idata.posterior["channel_contribution"].sum(dim=["date", "Geo"]).median(dim=["chain", "draw"])
-        contrib_df = total_contrib.to_series()
+
+    if is_demo_mode:
+        st.info("💡 Showing pre-calculated results from the Bayesian Posterior (Demo Mode).")
+        # Load the lightweight CSVs you just created
+        demo_roi = pd.read_csv("data/processed/demo_roi.csv", index_index=0)
+        demo_contrib = pd.read_csv("data/processed/demo_contribution.csv", index_col=0)
         
         col1, col2 = st.columns(2)
-        
         with col1:
             st.subheader("Media Contribution Share")
-            fig3, ax3 = plt.subplots()
-            contrib_df.index = [c.replace('"', '') for c in contrib_df.index]
-            contrib_df.plot.pie(autopct='%1.1f%%', ax=ax3, legend=False)
-            ax3.set_ylabel("")
-            st.pyplot(fig3)
-            
+            st.bar_chart(demo_contrib)
         with col2:
-            st.subheader("Channel Effectiveness (Betas)")
-            betas = mmm.idata.posterior["saturation_beta"].mean(dim=["chain", "draw", "Geo"]).to_series()
-            betas.index = [c.replace('"', '') for c in betas.index]
-            st.bar_chart(betas)
+            st.subheader("Channel ROI (Betas)")
+            st.bar_chart(demo_roi)
+    
     else:
-        st.warning("Channel contribution data not found in model. Try re-running the optimization to populate results.")
+        # 1. Extract Contribution for Pie Chart
+        if "channel_contribution" in mmm.idata.posterior:
+            total_contrib = mmm.idata.posterior["channel_contribution"].sum(dim=["date", "Geo"]).median(dim=["chain", "draw"])
+            contrib_df = total_contrib.to_series()
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("Media Contribution Share")
+                fig3, ax3 = plt.subplots()
+                contrib_df.index = [c.replace('"', '') for c in contrib_df.index]
+                contrib_df.plot.pie(autopct='%1.1f%%', ax=ax3, legend=False)
+                ax3.set_ylabel("")
+                st.pyplot(fig3)
+                
+            with col2:
+                st.subheader("Channel Effectiveness (Betas)")
+                betas = mmm.idata.posterior["saturation_beta"].mean(dim=["chain", "draw", "Geo"]).to_series()
+                betas.index = [c.replace('"', '') for c in betas.index]
+                st.bar_chart(betas)
+        else:
+            st.warning("Channel contribution data not found in model. Try re-running the optimization to populate results.")
+
+        pass
 
 
 

@@ -240,6 +240,23 @@ if res.success:
     target_budget = 1000000.0
     
     bau_da = calculate_lift(mmm, optimal, data, channels, target_budget)
+
+    #------STREAMLIT APP DEMO EXPORTATION-------------
+    print("\n📦 Exporting assets for Streamlit Cloud Demo...")
+    # 1. Export the Optimal Spend (Tab 1)
+    optimal_df = optimal.to_dataframe(name="Spend").reset_index()
+    optimal_df.to_csv("data/processed/demo_optimal_spend.csv", index=False)
+    
+    # 2. Export the ROI/Betas (Tab 3)
+    roi_series = mmm.idata.posterior["saturation_beta"].mean(("chain", "draw", "Geo")).to_series()
+    roi_series.to_csv("data/processed/demo_roi.csv")
+    
+    # 3. Export Channel Contribution (Tab 3 Pie Chart)
+    contrib = mmm.idata.posterior["channel_contribution"].sum(dim=["date", "Geo"]).median(dim=["chain", "draw"]).to_series()
+    contrib.to_csv("data/processed/demo_contribution.csv")
+    print("✅ Demo assets saved to data/processed/")
+
+    #------------------------------------------------------
     
     plot_spend_comparison(optimal, bau_da)
     

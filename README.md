@@ -53,7 +53,7 @@ Unlike traditional models, OptiSpend includes a Causal Inference module. By defi
 
 1. **Clone the Repo:**
    ```bash
-   git clone [https://github.com/your-username/OptiSpend.git](https://github.com/your-username/OptiSpend.git)
+   git clone [https://github.com/yinkak/OptiSpend.git](https://github.com/yinkak/OptiSpend.git)
    cd OptiSpend
    ```
 
